@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter
 
-from controller.functions.controller import process_request, history, format_history, format_history_as_string
+from controller.functions.controller_functions import format_history, format_history_as_string, process_request, history
 from controller.schemas.request import SensorData
 from controller.schemas.response import ControllerDecision
 
