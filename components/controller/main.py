@@ -2,10 +2,8 @@ import logging
 
 from fastapi import FastAPI
 
-from components.controller.routers.controller import controller_router
-
-logging.basicConfig(level=logging.DEBUG)
-app = FastAPI(logging=True)
+from controller.routers.controller_router import controller_router
+app = FastAPI(logging=False)
 app.include_router(controller_router, prefix='/api/v1')
 
 

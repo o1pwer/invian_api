@@ -11,8 +11,8 @@ controller_router = APIRouter()
 
 @controller_router.post("/controller/send_request", response_model=Optional[ControllerDecision])
 async def recieve_request(data: SensorData):
-    print(f"Data: {data}")
-    print(f"Type of data: {type(data)}")
+    # print(f"Data: {data}")
+    # print(f"Type of data: {type(data)}")
     response = await process_request(data)
     if response:
         return response
