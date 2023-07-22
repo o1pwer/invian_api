@@ -1,107 +1,91 @@
+import asyncio
+import json
+import socket
 from datetime import datetime, timedelta
 from typing import List
 
+import httpx
+
 from controller.schemas.request import SensorData
 from controller.schemas.response import Status, ControllerDecision
-import socket
-import json
 import logging
+# Нужно накидать сюда смешных комментов.
+# Прошу, не забудь. =)
+def current_time():
+    return datetime.now().replace(microsecond=0)
 
-logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
-logger = logging.getLogger(__name__)
-STATUS_THRESHOLD = 50
+class Controller:
+    def __init__(self, status_threshold=50, log_level=logging.DEBUG):
+        self.status_threshold = status_threshold
+        self.latest_data = []
+        self.history = []
+        self.last_decision_time = current_time()
+        self.previous_status = None
+        self.lock = asyncio.Lock()
 
-# Здесь переменные для хранения данных от датчиков
-latest_data = []
-history = []
-last_decision_time = datetime.now()
-history_append_time = datetime.now()
-start_time = datetime.now()
+        logging.basicConfig(format='%(asctime)s %(message)s', level=log_level, handlers=[logging.StreamHandler()])
+        self.logger = logging.getLogger(__name__)
 
-# Предыдущий статус манипулятора
-previous_status = None
+    async def process_request(self, data: SensorData) -> ControllerDecision:
+        async with self.lock:
+            data.datetime = datetime.fromisoformat(data.datetime)
 
+            self.latest_data.append(data.payload)
 
-async def process_request(data: SensorData) -> ControllerDecision:
-    global last_decision_time, previous_status
-    data.datetime = datetime.fromisoformat(data.datetime)
+            now = current_time()
+            now_str = now.isoformat()
+            if now - self.last_decision_time < timedelta(seconds=5):
+                return
 
-    # Добавляем полученные данные в список latest_data
-    latest_data.append(data.payload)
+            self.logger.info("Начало принятия решения.")
+            last_decision_time_str = self.last_decision_time.isoformat()
 
-    # Проверяем, прошло ли 5 секунд с момента последнего решения
-    now = datetime.now().replace(microsecond=0)
-    now_str = now.isoformat()
-    if now - last_decision_time < timedelta(seconds=5):
-        # Если нет, то новое решение пока не принимаем
-        return
-    logger.info("Начало принятия решения.")
-    last_decision_time_str = last_decision_time.isoformat()
+            total_payload = sum(self.latest_data)
+            average_payload = total_payload / len(self.latest_data)
 
-    # Принимаем решение на основе последних данных
-    total_payload = sum(latest_data)
-    average_payload = total_payload / len(latest_data)
+            status = "up" if average_payload > self.status_threshold else "down"
+            self.logger.info(f"Статус: {status}")
+            if status != self.previous_status:
+                print(f"Статус изменился: {self.previous_status} -> {status}")
+                decision = ControllerDecision(datetime=now, status=status)
+                self.logger.info(f"Принято решение: {decision}")
+                await tcp_client(json.dumps(decision.model_dump(mode='json')))
 
-    status = "up" if average_payload > STATUS_THRESHOLD else "down"
-    logger.info(f"Статус: {status}")
-    if status != previous_status:
-        print(f"Статус изменился: {previous_status} -> {status}")
-        decision = ControllerDecision(datetime=now, status=status)
-        logger.info(f"Принято решение: {decision}")
-        tcp_client(json.dumps(decision.model_dump(mode='json')))
-    previous_status = status
+            self.previous_status = status
 
-    # Обновляем историю
-    if history and history[-1].status == status:
-        # Если статус такой же, как и последний, просто обновляем время окончания
-        history[-1].end = now
-    else:
-        # Если статус изменился, добавляем новую запись в историю
-        history.append(Status(start=datetime.fromisoformat(last_decision_time_str),
-                              end=datetime.fromisoformat(now_str),
-                              status=status))
+            if self.history and self.history[-1].status == status:
+                self.history[-1].end = now
+            else:
+                self.history.append(Status(start=datetime.fromisoformat(last_decision_time_str), end=datetime.fromisoformat(now_str), status=status))
 
-    last_decision_time = now
+            self.last_decision_time = now
 
-    # Очищаем список latest_data, так как мы уже обработали эти данные
-    latest_data.clear()
-    decision = ControllerDecision(datetime=now, status=status)
-    return decision
+            self.latest_data.clear()
 
-def format_history(history: List[Status]) -> List[str]:
-    # Форматируем историю как список строк
-    return [
-        f"[{status.start.strftime('%H:%M:%S')} - {status.end.strftime('%H:%M:%S')} {status.status.upper()}]"
-        for status in history
-    ]
+            return ControllerDecision(datetime=now, status=status)
 
-def format_history_as_string(history: List[Status]) -> str:
-    # Форматируем историю как одну строку
-    formatted_history = []
-    for record in history:
-        formatted = f"[{record.start.strftime('%H:%M:%S')} - {record.end.strftime('%H:%M:%S')} {record.status.upper()}]"
-        formatted_history.append(formatted)
-    return ', '.join(formatted_history)
+    def _format_history(self, history: List[Status]) -> List[str]:
+        return [f"[{status.start.strftime('%H:%M:%S')} - {status.end.strftime('%H:%M:%S')} {status.status.upper()}]" for status in history]
+
+    def _format_history_as_string(self, history: List[Status]) -> str:
+        formatted_history = [f"[{record.start.strftime('%H:%M:%S')} - {record.end.strftime('%H:%M:%S')} {record.status.upper()}]" for record in history]
+        return ', '.join(formatted_history)
+
+    def get_history(self) -> List[str]:
+        return self._format_history(self.history)
+
+    def get_history_as_string(self) -> str:
+        return self._format_history_as_string(self.history)
 
 
-def tcp_client(message: str):
-    # Создаем сокет TCP/IP
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    # Подключаем сокет к адресу и порту сервера
-    server_address = ('localhost', 55555)
-    print(f"Подключаемся к {server_address[0]} порт {server_address[1]}")
-    try:
-        client_socket.connect(server_address)
-    except ConnectionRefusedError:
-        print("Не удалось подключиться к серверу")
-        return
-
-    try:
-        # Отправляем данные
-        message += "\n"  # добавляем символ новой строки в конец
+async def tcp_client(message: str, server_address='localhost', server_port=8080):
+    url = f"http://{server_address}:{server_port}/"
+    print(f"Подключаемся к {url}")
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(url, data=message)
+        except httpx.ConnectError:
+            print("Не удалось подключиться к серверу")
+            return
         print(f"Отправляем {message}")
-        client_socket.sendall(message.encode())
-    finally:
         print("Закрываем сокет")
-        client_socket.close()
