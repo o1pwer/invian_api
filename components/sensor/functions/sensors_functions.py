@@ -33,7 +33,7 @@ class Sensor:
     PAYLOAD_MAX = 100
 
     def __init__(self, messages_per_second=300, logger=None,
-                 controller_endpoint="http://localhost:8000/api/v1/controller/data"):
+                 controller_endpoint="http://controller:8000/api/v1/controller/data"):
         if messages_per_second <= 0:
             raise ValueError("messages_per_second must be a positive number")
         if not self._is_valid_url(controller_endpoint):

@@ -33,7 +33,7 @@ class Manipulator:
                 Stop the aiohttp server.
         """
     VALID_STATUSES = ('up', 'down')
-    SERVER_ADDRESS = 'localhost'
+    SERVER_ADDRESS = 'manipulator'
     SERVER_PORT = 8080
     ENDPOINT = '/'
 

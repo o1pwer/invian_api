@@ -1,0 +1,28 @@
+# docker-compose.yml
+version: '3'
+
+services:
+  sensor:
+    build: ./components/sensor
+    volumes:
+      - ./components/sensor:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  controller:
+    build: ./components/controller
+    volumes:
+      - ./components/controller:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    ports:
+      - 8000:8000
+
+  manipulator:
+    build: ./components/manipulator
+    volumes:
+      - ./components/manipulator:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    ports:
+      - 8080:8080
