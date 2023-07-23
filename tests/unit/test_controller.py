@@ -1,5 +1,6 @@
 import asyncio
 import time
+from datetime import timedelta
 
 import pytest
 
@@ -8,39 +9,39 @@ from controller.functions.controller_functions import Controller, get_current_ti
 from controller.schemas.request import SensorData
 
 
-# Фикстура для создания контроллера перед каждым тестом
+# Fixture to create a controller before each test
 @pytest.fixture
 def controller():
     return Controller(status_threshold=50)
 
 
-# Проверяем, что контроллер правильно определяет статус как "up", когда среднее значение больше порогового
+# Test if the controller correctly determines the status as "up" when the average is above the threshold
 @pytest.mark.asyncio
 async def test_status_up(controller):
-    # Инициализируем решение как None
+    # Initialize the decision as None
     decision = None
 
-    # Определяем временной лимит для теста
+    # Set a time limit for the test
     time_limit = 20
     start_time = time.time()
 
-    # Ждем, пока контроллер не примет решение
+    # Wait until the controller makes a decision
     while decision is None:
-        # Если тест занимает слишком много времени, выбрасываем исключение
+        # Raise an exception if the test takes too much time
         if time.time() - start_time > time_limit:
-            raise Exception("Тест занял слишком много времени")
+            raise Exception("Test took too much time")
 
-        # Генерируем данные от сенсора
+        # Generate sensor data
         data = SensorData(datetime=get_current_time_without_microseconds().isoformat(), payload=60)
-        # Просим контроллер обработать данные
+        # Ask the controller to process the data
         decision = await controller.process_request(data)
         await asyncio.sleep(0.001)
 
-    # Проверяем, что статус решения - "up"
+    # Check that the decision status is "up"
     assert decision.status == "up"
 
 
-# Тест на проверку статуса "down"
+# Test for "down" status
 @pytest.mark.asyncio
 async def test_status_down(controller):
     decision = None
@@ -50,7 +51,7 @@ async def test_status_down(controller):
 
     while decision is None:
         if time.time() - start_time > time_limit:
-            raise Exception("Тест занял слишком много времени")
+            raise Exception("Test took too much time")
 
         data = SensorData(datetime=get_current_time_without_microseconds().isoformat(), payload=40)
         decision = await controller.process_request(data)
@@ -59,6 +60,7 @@ async def test_status_down(controller):
     assert decision.status == "down"
 
 
+# Test for very large payload values
 @pytest.mark.asyncio
 async def test_status_corner_case_up(controller):
     for _ in range(300):
@@ -78,7 +80,7 @@ async def test_status_corner_case_down(controller):
         await asyncio.sleep(0.001)
 
 
-# Проверяем, что контроллер правильно устанавливает время в решении
+# Test if the controller correctly sets the time in the decision
 @pytest.mark.asyncio
 async def test_datetime(controller):
     decision = None
@@ -88,11 +90,21 @@ async def test_datetime(controller):
 
     while decision is None:
         if time.time() - start_time > time_limit:
-            raise Exception("Тест занял слишком много времени")
+            raise Exception("Test took too much time")
 
         data = SensorData(datetime=get_current_time_without_microseconds().isoformat(), payload=40)
         decision = await controller.process_request(data)
         await asyncio.sleep(0.001)
 
-    # Проверяем, что время в решении контроллера совпадает с текущим временем (без учета секунд)
+    # Check that the time in the controller's decision matches the current time (ignoring seconds)
     assert decision.datetime.replace(second=0) == get_current_time_without_microseconds().replace(second=0)
+
+
+# Test if the controller correctly ignores outdated data
+@pytest.mark.asyncio
+async def test_ignore_outdated_data(controller):
+    # Generate sensor data with an outdated timestamp
+    outdated_data = SensorData(datetime=(get_current_time_without_microseconds() - timedelta(seconds=10)).isoformat(), payload=60)
+    # The controller should ignore this data and not make a decision
+    decision = await controller.process_request(outdated_data)
+    assert decision is None

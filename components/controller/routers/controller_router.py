@@ -19,7 +19,7 @@ def get_controller(app: FastAPI = Depends()):
 controller_router = APIRouter()
 
 
-@controller_router.post("/controller/send_request", response_model=Optional[ControllerDecision])
+@controller_router.post("/controller/data", response_model=Optional[ControllerDecision])
 async def recieve_request(data: SensorData):
     controller = Controller()
     try:

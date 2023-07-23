@@ -5,6 +5,33 @@ from aiohttp import web
 
 
 class Manipulator:
+    """
+        This class represents a Manipulator which receives status updates from a Controller via HTTP requests.
+
+        The Manipulator runs an aiohttp server and listens for incoming requests on a specified endpoint.
+        When a request is received, it validates the status and updates its current status accordingly.
+
+        Attributes:
+            VALID_STATUSES (tuple): Valid statuses that can be received.
+            SERVER_ADDRESS (str): Address where the server is running.
+            SERVER_PORT (int): Port where the server is listening.
+            ENDPOINT (str): Endpoint where the server receives status updates.
+            current_status (str): Current status of the manipulator.
+            server (web.AppRunner): The aiohttp server.
+            stop_event (asyncio.Event): Event to signal the server to stop.
+            server_run_event (asyncio.Event): Event to signal when the server is running.
+            logger (logging.Logger): A logger instance for logging information.
+
+        Methods:
+            handle_request(request: web.Request) -> web.Response:
+                Handle incoming requests, validate the status, and update the current_status.
+            get_status() -> str:
+                Return the current status.
+            run_server() -> None:
+                Run the aiohttp server.
+            stop_server() -> None:
+                Stop the aiohttp server.
+        """
     VALID_STATUSES = ('up', 'down')
     SERVER_ADDRESS = 'localhost'
     SERVER_PORT = 8080
