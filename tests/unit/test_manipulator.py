@@ -1,6 +1,6 @@
-import httpx
 import asyncio
 
+import httpx
 import pytest
 
 from manipulator.functions.manipulator_functions import Manipulator
@@ -37,4 +37,27 @@ async def test_manipulator():
     await server_task
 
 
+@pytest.mark.asyncio
+async def test_manipulator_corner_cases():
+    manipulator = Manipulator()
+    server_task = asyncio.create_task(manipulator.run_server())
 
+    await asyncio.sleep(0.1)
+    # Отправляем непонятно что вместо статуса.
+    async with httpx.AsyncClient() as client:
+        await client.post('http://localhost:8080/', json={'status': 'hbgjkmuy,'})
+
+    await asyncio.sleep(0.1)
+
+    # Проверяем, что статус манипулятора не изменился и все так же пуст.
+    assert manipulator.get_status() == ''
+
+    # Соответственно, делаем то же самое, только с полным отсутствием статуса в запросе.
+    async with httpx.AsyncClient() as client:
+        await client.post('http://localhost:8080/', json={'foo': 'bar'})
+
+    await asyncio.sleep(0.1)
+
+    assert manipulator.get_status() == ''
+    await manipulator.stop_server()
+    await server_task
