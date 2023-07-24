@@ -11,7 +11,6 @@ from sensor.functions.sensors_functions import Sensor
 logger = logging.getLogger(__name__)
 
 
-# Функция, которая просто подсчитывает, сколько раз ее вызвали.
 def count_calls(num_calls: list):
     def side_effect(*args, **kwargs):
         num_calls[0] += 1
@@ -20,7 +19,7 @@ def count_calls(num_calls: list):
     return side_effect
 
 
-# Фикстура для создания сенсора перед каждым тестом
+# Fixture which basically creates a Sensor
 @pytest.fixture
 def sensor():
     return Sensor()

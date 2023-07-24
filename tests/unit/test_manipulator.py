@@ -8,31 +8,31 @@ from manipulator.functions.manipulator_functions import Manipulator
 
 @pytest.mark.asyncio
 async def test_manipulator():
-    # Создадим манипулятор и сервак в отдельной таске
+    # Creating Manipulator and server in separate task
     manipulator = Manipulator()
     server_task = asyncio.create_task(manipulator.run_server())
 
-    # Ждем, пока сервак запустится. (можно сделать и умнее)
+    # Waiting for server to start
     await asyncio.sleep(0.1)
 
-    # Отправим новый статус манипулятору.
+    # Sending new status to manipulator
     async with httpx.AsyncClient() as client:
         await client.post('http://localhost:8080/', json={'status': 'up'})
 
-    # Ждем обработку запроса серверов (да, я знаю, я немножко ленивый)
+    # Waiting for manipulator to process what we've sent to it
     await asyncio.sleep(0.1)
 
-    # Проверяем, как обновился статус манипулятора.
+    # Checking if the status has actually updated.
     assert manipulator.get_status() == 'up'
 
-    # Соответственно, делаем то же самое, только с другим статусом.
+    # Same with other status.
     async with httpx.AsyncClient() as client:
         await client.post('http://localhost:8080/', json={'status': 'down'})
 
     await asyncio.sleep(0.1)
 
     assert manipulator.get_status() == 'down'
-    # Сервер можно остановить
+    # Stopping the server.
     await manipulator.stop_server()
     await server_task
 
@@ -43,16 +43,16 @@ async def test_manipulator_corner_cases():
     server_task = asyncio.create_task(manipulator.run_server())
 
     await asyncio.sleep(0.1)
-    # Отправляем непонятно что вместо статуса.
+    # Sending wrong status
     async with httpx.AsyncClient() as client:
         await client.post('http://localhost:8080/', json={'status': 'hbgjkmuy,'})
 
     await asyncio.sleep(0.1)
 
-    # Проверяем, что статус манипулятора не изменился и все так же пуст.
+    # Checking that status doesn't change
     assert manipulator.get_status() == ''
 
-    # Соответственно, делаем то же самое, только с полным отсутствием статуса в запросе.
+    # Sending a completely wrong data
     async with httpx.AsyncClient() as client:
         await client.post('http://localhost:8080/', json={'foo': 'bar'})
 

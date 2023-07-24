@@ -1,11 +1,18 @@
-# manipulator/Dockerfile
-FROM python:3.9
+# Use an official Python runtime as a parent image
+FROM invian_shared
 
+# Set the working directory in the container to /app
 WORKDIR /app
 
-COPY requirements.txt ./
-RUN pip install -r requirements.txt
+# Add the current directory contents into the container at /app
+ADD ./components/manipulator /app
 
-COPY . .
+# Install any needed packages specified in requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+ENV PYTHONPATH "${PYTHONPATH}:."
+# Make port 80 available to the world outside this container
+EXPOSE 80
 
-CMD [ "python", "-u", "main.py" ]
+# Run main.py when the container launches
+CMD ["python", "main.py"]
+

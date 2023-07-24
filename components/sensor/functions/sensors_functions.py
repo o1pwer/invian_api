@@ -5,8 +5,9 @@ from datetime import datetime
 from urllib.parse import urlparse
 
 import httpx
+import pika
 
-from controller.schemas.request import SensorData
+from invian_shared.shared_schemas import SensorData
 
 
 class Sensor:
@@ -72,6 +73,7 @@ class Sensor:
             finally:
                 if iterations is not None:
                     iterations -= 1
+
 
     @staticmethod
     def _is_valid_url(url: str) -> bool:

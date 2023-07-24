@@ -2,12 +2,12 @@ import asyncio
 import json
 import logging
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Union
 
-from controller.exceptions.controller_exceptions import BadPayloadException
-from controller.schemas.request import SensorData
 from controller.schemas.response import Status, ControllerDecision
-from utils.network import tcp_client
+from invian_shared.shared_exceptions import BadPayloadException
+from invian_shared.shared_schemas import SensorData
+from invian_shared.utils.network import tcp_client
 
 
 def get_current_time_without_microseconds():
@@ -81,7 +81,7 @@ class Controller(metaclass=Singleton):
         if payload < self.min_payload:
             raise BadPayloadException(f"Received unrealistically low payload: {payload}. Ignoring.")
 
-    async def process_request(self, data: SensorData) -> ControllerDecision | None:
+    async def process_request(self, data: SensorData) -> Union[ControllerDecision, None]:
         self.logger.debug('Processing request...')
         async with self.lock:
             self.logger.debug('Lock acquired.')

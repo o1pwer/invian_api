@@ -4,12 +4,11 @@ from datetime import timedelta
 
 import pytest
 
-from controller.exceptions.controller_exceptions import BadPayloadException
 from controller.functions.controller_functions import Controller, get_current_time_without_microseconds
-from controller.schemas.request import SensorData
+from invian_shared.shared_exceptions import BadPayloadException
+from invian_shared.shared_schemas import SensorData
 
 
-# Fixture to create a controller before each test
 @pytest.fixture
 def controller():
     return Controller(status_threshold=50)

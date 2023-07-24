@@ -1,6 +1,6 @@
 import asyncio
 
-from manipulator.functions.manipulator_functions import Manipulator
+from functions.manipulator_functions import Manipulator
 
 if __name__ == "__main__":
     async def main():

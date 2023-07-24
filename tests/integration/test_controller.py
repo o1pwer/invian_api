@@ -8,7 +8,6 @@ from controller.functions.controller_functions import Controller
 from controller.main import app
 
 
-# Фикстура для создания контроллера перед каждым тестом
 @pytest.fixture(autouse=True)
 def reset_controller():
     controller = Controller()
