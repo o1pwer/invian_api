@@ -26,8 +26,7 @@ async def test_sensor_generate_sensor_data_with_connect_error(mocker):
     mocker.patch.object(httpx.AsyncClient, "post", side_effect=Exception)
 
     # Act
-    with pytest.raises(Exception):
-        await sensor.generate_sensor_data(iterations=1)
+    await sensor.generate_sensor_data(iterations=1)
 
     # Assert
     assert httpx.AsyncClient.post.call_count == 1

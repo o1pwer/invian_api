@@ -17,7 +17,7 @@ async def test_manipulator():
 
     # Sending new status to manipulator
     async with httpx.AsyncClient() as client:
-        await client.post('http://localhost:8080/', json={'status': 'up'})
+        await client.post('http://manipulator:8080/', json={'status': 'up'})
 
     # Waiting for manipulator to process what we've sent to it
     await asyncio.sleep(0.1)
@@ -27,7 +27,7 @@ async def test_manipulator():
 
     # Same with other status.
     async with httpx.AsyncClient() as client:
-        await client.post('http://localhost:8080/', json={'status': 'down'})
+        await client.post('http://manipulator:8080/', json={'status': 'down'})
 
     await asyncio.sleep(0.1)
 
@@ -45,7 +45,7 @@ async def test_manipulator_corner_cases():
     await asyncio.sleep(0.1)
     # Sending wrong status
     async with httpx.AsyncClient() as client:
-        await client.post('http://localhost:8080/', json={'status': 'hbgjkmuy,'})
+        await client.post('http://manipulator:8080/', json={'status': 'hbgjkmuy,'})
 
     await asyncio.sleep(0.1)
 
@@ -54,7 +54,7 @@ async def test_manipulator_corner_cases():
 
     # Sending a completely wrong data
     async with httpx.AsyncClient() as client:
-        await client.post('http://localhost:8080/', json={'foo': 'bar'})
+        await client.post('http://manipulator:8080/', json={'foo': 'bar'})
 
     await asyncio.sleep(0.1)
 
