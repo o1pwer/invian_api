@@ -1,6 +1,6 @@
 # Project Title
 
-Test task for Invian - a system of controller, manipulator and sensors.
+Test task for COMPANY_NAME - a system of controller, manipulator and sensors.
 
 ## Introduction
 

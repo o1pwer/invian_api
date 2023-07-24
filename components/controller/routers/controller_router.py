@@ -4,8 +4,8 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends
 from fastapi import FastAPI
 
-from controller.functions.controller_functions import Controller
-from controller.schemas.response import ControllerDecision
+from components.controller.functions.controller_functions import Controller
+from components.controller.schemas.response import ControllerDecision
 from invian_shared.shared_exceptions import BadPayloadException
 from invian_shared.shared_schemas import SensorData
 

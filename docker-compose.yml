@@ -1,11 +1,17 @@
 version: '3'
 
+networks:
+  my_network:
+    driver: bridge
+
 services:
   rabbitmq:
     image: "rabbitmq:3-management"
     ports:
       - "5672:5672"
       - "15672:15672"
+    networks:
+      - my_network
 
   sensor:
     build:
@@ -15,6 +21,8 @@ services:
       - PYTHONUNBUFFERED=1
     depends_on:
       - rabbitmq
+    networks:
+      - my_network
 
   controller:
     build:
@@ -26,6 +34,8 @@ services:
       - 8000:8000
     depends_on:
       - rabbitmq
+    networks:
+      - my_network
 
   manipulator:
     build:
@@ -37,3 +47,5 @@ services:
       - 8080:8080
     depends_on:
       - rabbitmq
+    networks:
+      - my_network

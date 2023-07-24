@@ -4,8 +4,8 @@ from unittest.mock import Mock
 import pytest
 from fastapi.testclient import TestClient
 
-from controller.functions.controller_functions import Controller
-from controller.main import app
+from components.controller.functions.controller_functions import Controller
+from components.controller.main import app
 
 
 @pytest.fixture(autouse=True)

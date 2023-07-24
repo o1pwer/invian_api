@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from manipulator.functions.manipulator_functions import Manipulator
+from components.manipulator.functions.manipulator_functions import Manipulator
 
 
 @pytest.mark.asyncio

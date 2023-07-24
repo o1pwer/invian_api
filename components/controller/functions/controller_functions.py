@@ -4,7 +4,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import List, Union
 
-from controller.schemas.response import Status, ControllerDecision
+from components.controller.schemas.response import Status, ControllerDecision
 from invian_shared.shared_exceptions import BadPayloadException
 from invian_shared.shared_schemas import SensorData
 from invian_shared.utils.network import tcp_client

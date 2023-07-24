@@ -1,7 +1,14 @@
 import asyncio
 import logging
+from unittest.mock import MagicMock, AsyncMock
 
 from aiohttp import web
+
+
+class MockServer:
+    def __init__(self):
+        self.start = AsyncMock()
+        self.cleanup = AsyncMock()
 
 
 class Manipulator:
@@ -33,30 +40,39 @@ class Manipulator:
                 Stop the aiohttp server.
         """
     VALID_STATUSES = ('up', 'down')
-    SERVER_ADDRESS = 'manipulator'
     SERVER_PORT = 8080
     ENDPOINT = '/'
+    SERVER_ADDRESS = 'manipulator'
 
-    def __init__(self):
+    def __init__(self, server=None, mock=False):
         self.current_status = ""
-        self.server = None
+        self.server = server
+        self.mock = mock
         self.stop_event = asyncio.Event()
         self.server_run_event = asyncio.Event()
         self.logger = logging.getLogger()
 
     async def handle_request(self, request):
         """Handle incoming requests, validate the status, and update the current_status."""
-        data = await request.json()
+        try:
+            data = await request.json()
+        except Exception as e:
+            self.logger.error(f"Error parsing request: {e}")
+            return web.json_response({"error": "Error parsing request."}, status=400)
+
         received_status = data.get('status')
         if not received_status:
-            self.logger.warning("Didn't recieve any status. Ignoring.")
+            self.logger.warning("Didn't receive any status. Ignoring.")
             return web.json_response({"error": "No status received."}, status=400)
+
         if received_status not in self.VALID_STATUSES:
-            self.logger.warning(f"Recieved unusual status: {received_status}. Ignoring.")
-            return web.json_response({"error": f"Invalid status received: {received_status}."
-                                               f" Expected one of {self.VALID_STATUSES}."}, status=400)
-        self.current_status = data.get('status')
-        print(f"Received data: {data}")
+            self.logger.warning(f"Received unusual status: {received_status}. Ignoring.")
+            return web.json_response(
+                {"error": f"Invalid status received: {received_status}. Expected one of {self.VALID_STATUSES}."},
+                status=400)
+
+        self.current_status = received_status
+        self.logger.info(f"Received data: {data}")
         return web.Response()
 
     def get_status(self):
@@ -65,6 +81,28 @@ class Manipulator:
 
     async def run_server(self):
         """Run the aiohttp server."""
+        self.logger.info("Running server...")
+        if self.mock:
+            await self.mock_run_server()
+        else:
+            await self.real_run_server()
+        self.logger.info("Server is running.")
+
+    async def mock_run_server(self):
+        """Run as a mock server."""
+        app = web.Application()
+        runner = web.AppRunner(app)
+        await runner.setup()
+        site = web.TCPSite(runner)
+        await site.start()
+        self.server = runner
+        self.server_run_event.set()
+
+        await self.server_run_event.wait()
+        self.logger.info("Mock server is stopping.")
+
+    async def real_run_server(self):
+        """Run as a real server."""
         app = web.Application()
         app.add_routes([web.post(self.ENDPOINT, self.handle_request)])
 
@@ -74,14 +112,14 @@ class Manipulator:
         await site.start()
 
         self.server = runner
-
-        # Wait for the stop signal.
         await self.server_run_event.wait()
 
-    async def stop_server(self):
-        """Stop the aiohttp server."""
-        # Trigger the stop signal.
-        self.server_run_event.set()
 
-        # Wait for the server to stop.
-        await self.server.cleanup()
+async def stop_server(self):
+        """Stop the aiohttp server."""
+        self.logger.info("Stopping server...")
+        self.server_run_event.clear()
+        if self.server is not None:
+            await self.server.cleanup()
+            self.server = None
+        self.logger.info("Server stopped.")

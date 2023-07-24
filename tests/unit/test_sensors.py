@@ -6,7 +6,7 @@ import httpx
 import pytest
 from httpx import Response
 
-from sensor.functions.sensors_functions import Sensor
+from components.sensor.functions.sensors_functions import Sensor
 
 logger = logging.getLogger(__name__)
 

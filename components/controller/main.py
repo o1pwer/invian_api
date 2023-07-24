@@ -6,8 +6,8 @@ import pika
 import uvicorn
 from fastapi import FastAPI
 
-from functions.controller_functions import Controller
-from routers.controller_router import controller_router
+from components.controller.functions.controller_functions import Controller
+from components.controller.routers.controller_router import controller_router
 
 logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG, handlers=[logging.StreamHandler()])
 logger = logging.getLogger()

@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock
 import httpx
 import pytest
 
-from sensor.functions.sensors_functions import Sensor
+from components.sensor.functions.sensors_functions import Sensor
 
 
 @pytest.mark.asyncio

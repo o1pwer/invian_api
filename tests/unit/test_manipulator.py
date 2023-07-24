@@ -1,63 +1,41 @@
-import asyncio
+from unittest.mock import AsyncMock
 
-import httpx
 import pytest
 
-from manipulator.functions.manipulator_functions import Manipulator
+from components.manipulator.functions.manipulator_functions import Manipulator
 
 
 @pytest.mark.asyncio
-async def test_manipulator():
-    # Creating Manipulator and server in separate task
+async def test_manipulator_handle_request():
     manipulator = Manipulator()
-    server_task = asyncio.create_task(manipulator.run_server())
+    request = AsyncMock()
+    request.json.return_value = {"status": "up"}
 
-    # Waiting for server to start
-    await asyncio.sleep(0.1)
+    response = await manipulator.handle_request(request)
 
-    # Sending new status to manipulator
-    async with httpx.AsyncClient() as client:
-        await client.post('http://manipulator:8080/', json={'status': 'up'})
-
-    # Waiting for manipulator to process what we've sent to it
-    await asyncio.sleep(0.1)
-
-    # Checking if the status has actually updated.
-    assert manipulator.get_status() == 'up'
-
-    # Same with other status.
-    async with httpx.AsyncClient() as client:
-        await client.post('http://manipulator:8080/', json={'status': 'down'})
-
-    await asyncio.sleep(0.1)
-
-    assert manipulator.get_status() == 'down'
-    # Stopping the server.
-    await manipulator.stop_server()
-    await server_task
+    assert manipulator.get_status() == "up"
+    assert response.status == 200
 
 
 @pytest.mark.asyncio
-async def test_manipulator_corner_cases():
+async def test_manipulator_handle_invalid_request():
     manipulator = Manipulator()
-    server_task = asyncio.create_task(manipulator.run_server())
+    request = AsyncMock()
+    request.json.return_value = {"status": "invalid_status"}
 
-    await asyncio.sleep(0.1)
-    # Sending wrong status
-    async with httpx.AsyncClient() as client:
-        await client.post('http://manipulator:8080/', json={'status': 'hbgjkmuy,'})
+    response = await manipulator.handle_request(request)
 
-    await asyncio.sleep(0.1)
+    assert manipulator.get_status() == ""
+    assert response.status == 400
 
-    # Checking that status doesn't change
-    assert manipulator.get_status() == ''
 
-    # Sending a completely wrong data
-    async with httpx.AsyncClient() as client:
-        await client.post('http://manipulator:8080/', json={'foo': 'bar'})
+@pytest.mark.asyncio
+async def test_manipulator_handle_request_no_status():
+    manipulator = Manipulator()
+    request = AsyncMock()
+    request.json.return_value = {}
 
-    await asyncio.sleep(0.1)
+    response = await manipulator.handle_request(request)
 
-    assert manipulator.get_status() == ''
-    await manipulator.stop_server()
-    await server_task
+    assert manipulator.get_status() == ""
+    assert response.status == 400
