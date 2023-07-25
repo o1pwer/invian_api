@@ -112,7 +112,7 @@ history - ["[11:21:26 - 11:21:31 DOWN]","[11:21:31 - 11:21:41 UP]","[11:21:41 - 
 To launch unit tests, use the following Docker command:  
 `docker-compose up --build tests`  
 To launch integration test, use this command:  
-`docker-compose --build -f docker-compose.test.yml up tests`
+`docker-compose -f docker-compose.test.yml up --build tests`
 
 
 ## License 
