@@ -1,10 +1,10 @@
 import asyncio
 import logging
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock
 
 from aiohttp import web
 
-
+logging.basicConfig(level=logging.DEBUG)
 class MockServer:
     def __init__(self):
         self.start = AsyncMock()
@@ -50,7 +50,7 @@ class Manipulator:
         self.mock = mock
         self.stop_event = asyncio.Event()
         self.server_run_event = asyncio.Event()
-        self.logger = logging.getLogger()
+        self.logger = logging.getLogger('manipulator')
 
     async def handle_request(self, request):
         """Handle incoming requests, validate the status, and update the current_status."""
@@ -110,12 +110,11 @@ class Manipulator:
         await runner.setup()
         site = web.TCPSite(runner, self.SERVER_ADDRESS, self.SERVER_PORT)
         await site.start()
-
         self.server = runner
+        self.server_run_event.set()
         await self.server_run_event.wait()
 
-
-async def stop_server(self):
+    async def stop_server(self):
         """Stop the aiohttp server."""
         self.logger.info("Stopping server...")
         self.server_run_event.clear()

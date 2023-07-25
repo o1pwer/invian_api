@@ -23,4 +23,4 @@ ENV PYTHONPATH "${PYTHONPATH}:/app:/app/invian_shared"
 ENV RABBITMQ_HOST localhost
 
 # Run tests.py when the container launches
-CMD ["python", "-m", "pytest", "-vv", "/app/tests/"]
+CMD ["python", "-m", "pytest", "-vv", "/app/tests/unit/"]

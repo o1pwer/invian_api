@@ -7,7 +7,7 @@ import traceback
 
 import pika
 
-from .functions.sensors_functions import Sensor
+from components.sensor.functions.sensors_functions import Sensor
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -46,4 +46,5 @@ def wait_for_start_message():
 
 
 if __name__ == '__main__':
-    threading.Thread(target=wait_for_start_message, daemon=True).start()
+    while True:
+        wait_for_start_message()

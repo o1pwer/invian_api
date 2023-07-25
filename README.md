@@ -109,8 +109,12 @@ Example of correct data in endpoints:
 history_string - "[11:21:26 - 11:21:31 DOWN], [11:21:31 - 11:21:41 UP]"  
 history - ["[11:21:26 - 11:21:31 DOWN]","[11:21:31 - 11:21:41 UP]","[11:21:41 - 11:21:46 DOWN]","[11:21:46 - 11:21:51 UP]","[11:21:51 - 11:22:01 DOWN]"]  
 
-To launch tests, use the following Docker command:  
-`docker-compose up --build tests`
+To launch unit tests, use the following Docker command:  
+`docker-compose up --build tests`  
+To launch integration test, use this command:  
+`docker-compose --build -f docker-compose.test.yml up tests`
+
+
 ## License 
 
 This project is licensed under the [MIT License](LICENSE).

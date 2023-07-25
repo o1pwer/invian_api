@@ -1,0 +1,26 @@
+version: '3'
+
+networks:
+  my_network:
+    driver: bridge
+
+services:
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - my_network
+
+  tests:
+    build:
+      context: .
+      dockerfile: ./tests/Dockerfile.test
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: pytest -vv tests/integration
+    depends_on:
+      - rabbitmq
+    networks:
+      - my_network
