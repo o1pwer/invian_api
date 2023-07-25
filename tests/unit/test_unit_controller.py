@@ -11,15 +11,17 @@ from invian_shared.shared_exceptions import BadPayloadException
 from invian_shared.shared_schemas import SensorData
 
 
-@pytest.fixture
-def controller():
-    return Controller(status_threshold=50)
+@pytest.fixture(autouse=True)
+def reset_controller():
+    controller = Controller()
+    controller.reset()
+    return controller
 
 
 # Test if the controller correctly determines the status as "up" when the average is above the threshold
 @pytest.mark.asyncio
 @patch('components.controller.functions.controller_functions.tcp_client')
-async def test_status_up(mock_tcp_client, controller):
+async def test_status_up(mock_tcp_client, reset_controller):
     mock_tcp_client.return_value = None
     # Initialize the decision as None
     decision = None
@@ -37,7 +39,7 @@ async def test_status_up(mock_tcp_client, controller):
         # Generate sensor data
         data = SensorData(datetime=get_current_time_without_microseconds().isoformat(), payload=60)
         # Ask the controller to process the data
-        decision = await controller.process_request(data)
+        decision = await reset_controller.process_request(data)
         await asyncio.sleep(0.001)
 
     # Check that the decision status is "up"
@@ -47,7 +49,7 @@ async def test_status_up(mock_tcp_client, controller):
 # Test for "down" status
 @pytest.mark.asyncio
 @patch('components.controller.functions.controller_functions.tcp_client')
-async def test_status_down(mock_tcp_client, controller):
+async def test_status_down(mock_tcp_client, reset_controller):
     mock_tcp_client.return_value = None
     decision = None
 
@@ -59,7 +61,7 @@ async def test_status_down(mock_tcp_client, controller):
             raise Exception("Test took too much time")
 
         data = SensorData(datetime=get_current_time_without_microseconds().isoformat(), payload=40)
-        decision = await controller.process_request(data)
+        decision = await reset_controller.process_request(data)
         await asyncio.sleep(0.001)
 
     assert decision.status == "down"
@@ -68,12 +70,12 @@ async def test_status_down(mock_tcp_client, controller):
 # Test for very large payload values
 @pytest.mark.asyncio
 @patch('components.controller.functions.controller_functions.tcp_client')
-async def test_status_corner_case_up(mock_tcp_client, controller):
+async def test_status_corner_case_up(mock_tcp_client, reset_controller):
     mock_tcp_client.return_value = None
     for _ in range(300):
         data = SensorData(datetime=get_current_time_without_microseconds().isoformat(), payload=99999999999999999999)
         with pytest.raises(BadPayloadException):
-            await controller.process_request(data)
+            await reset_controller.process_request(data)
         await asyncio.sleep(0.001)
 
 
@@ -81,18 +83,18 @@ async def test_status_corner_case_up(mock_tcp_client, controller):
 # Test for very large payload values
 @pytest.mark.asyncio
 @patch('components.controller.functions.controller_functions.tcp_client')
-async def test_status_corner_case_down(mock_tcp_client, controller):
+async def test_status_corner_case_down(mock_tcp_client, reset_controller):
     mock_tcp_client.return_value = None
     for _ in range(300):
         data = SensorData(datetime=get_current_time_without_microseconds().isoformat(), payload=-99999999999999999999)
         with pytest.raises(BadPayloadException):
-            await controller.process_request(data)
+            await reset_controller.process_request(data)
         await asyncio.sleep(0.001)
 
 # Test if the controller correctly sets the time in the decision
 @pytest.mark.asyncio
 @patch('components.controller.functions.controller_functions.tcp_client')
-async def test_datetime(mock_tcp_client, controller):
+async def test_datetime(mock_tcp_client, reset_controller):
     mock_tcp_client.return_value = None
     decision = None
 
@@ -104,7 +106,7 @@ async def test_datetime(mock_tcp_client, controller):
             raise Exception("Test took too much time")
 
         data = SensorData(datetime=get_current_time_without_microseconds().isoformat(), payload=40)
-        decision = await controller.process_request(data)
+        decision = await reset_controller.process_request(data)
         await asyncio.sleep(0.001)
 
     # Check that the time in the controller's decision matches the current time (ignoring seconds)
@@ -116,10 +118,10 @@ async def test_datetime(mock_tcp_client, controller):
 # Test if the controller correctly ignores outdated data
 @pytest.mark.asyncio
 @patch('components.controller.functions.controller_functions.tcp_client')
-async def test_ignore_outdated_data(mock_tcp_client, controller):
+async def test_ignore_outdated_data(mock_tcp_client, reset_controller):
     mock_tcp_client.return_value = None
     # Generate sensor data with an outdated timestamp
     outdated_data = SensorData(datetime=(get_current_time_without_microseconds() - timedelta(seconds=10)).isoformat(), payload=60)
     # The controller should ignore this data and not make a decision
-    decision = await controller.process_request(outdated_data)
+    decision = await reset_controller.process_request(outdated_data)
     assert decision is None

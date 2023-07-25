@@ -1,4 +1,5 @@
 import logging
+import os
 import time
 import traceback
 
@@ -40,10 +41,10 @@ def send_start_message():
 
 @app.on_event("startup")
 async def startup_event():
-    app.state.controller = Controller(status_threshold=50)
     send_start_message()
+    app.state.controller = Controller(status_threshold=50)
 
 
 app.include_router(controller_router, prefix='/api/v1')
 
-uvicorn.run(app=app, host='controller', port=8000)
+uvicorn.run(app=app, host='0.0.0.0', port=8000)

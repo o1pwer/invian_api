@@ -49,3 +49,18 @@ services:
       - rabbitmq
     networks:
       - my_network
+
+  tests:
+    build:
+      context: .
+      dockerfile: ./tests/Dockerfile.test
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - rabbitmq
+      - sensor
+      - controller
+      - manipulator
+    networks:
+      - my_network
+

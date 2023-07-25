@@ -1,6 +1,6 @@
 # Project Title
 
-Test task for COMPANY_NAME - a system of controller, manipulator and sensors.
+Test task for Invian - a system of controller, manipulator and sensors.
 
 ## Introduction
 
@@ -43,6 +43,8 @@ Controller is class and a FastAPI app containing functions which are needed for 
 Controller has a part of RabbitMQ system integrated into it which notifies the sensors about its startup.  
 Moreover, Controller has 2 endpoints which can be used to get decision history. One returns it as string, another - as list.  
 Duplicate decisions couple into one decision.  
+Test task said that interval between decisions should be 5 seconds, but provided an example of history getting endpoint where it is clearly 5 minutes.  
+I decided to keep it as 5 seconds and modify the history formatting so it will include seconds.  
 
 ### Manipulator 
 
@@ -72,7 +74,7 @@ Technologies used in my test task:
 
 ## Testing 
 
-Project has almost full coverage of tests (both unit and integrational), with the exception of the RabbitMQ code.  
+Project has almost full coverage of tests (both unit and integration), with the exception of the RabbitMQ code.  
 
 ## Design Patterns 
 
@@ -106,6 +108,9 @@ Basically you just have to look at the logs and at the endpoints.
 Example of correct data in endpoints:  
 history_string - "[11:21:26 - 11:21:31 DOWN], [11:21:31 - 11:21:41 UP]"  
 history - ["[11:21:26 - 11:21:31 DOWN]","[11:21:31 - 11:21:41 UP]","[11:21:41 - 11:21:46 DOWN]","[11:21:46 - 11:21:51 UP]","[11:21:51 - 11:22:01 DOWN]"]  
+
+To launch tests, use the following Docker command:  
+`docker-compose up --build tests`
 ## License 
 
 This project is licensed under the [MIT License](LICENSE).

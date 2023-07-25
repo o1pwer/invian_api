@@ -19,5 +19,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Adjust the PYTHONPATH to include the necessary directories
 ENV PYTHONPATH "${PYTHONPATH}:/app:/app/invian_shared"
 
+# Set the RabbitMQ hostname to localhost
+ENV RABBITMQ_HOST localhost
+
 # Run tests.py when the container launches
 CMD ["python", "-m", "pytest", "-vv", "/app/tests/"]
